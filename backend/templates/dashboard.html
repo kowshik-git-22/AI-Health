@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+</head>
+<body class="app-body">
+
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <span class="logo-text">Health<span class="accent">Connect</span></span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard" class="nav-item active"><i class="bi bi-house"></i> Home</a>
+            <a href="/medicines" class="nav-item"><i class="bi bi-capsule"></i> Medicines</a>
+            <a href="/records" class="nav-item"><i class="bi bi-file-earmark-text"></i> Records</a>
+            <a href="/profile" class="nav-item"><i class="bi bi-person"></i> Profile</a>
+        </nav>
+        <a href="/logout" class="logout-link"><i class="bi bi-box-arrow-right"></i> Logout</a>
+    </aside>
+
+    <main class="main-content">
+
+        <div class="dashboard-header">
+            <div>
+                <p class="greeting-sub">Good morning,</p>
+                <h2 class="greeting-name">{{ name }}</h2>
+            </div>
+            <div class="search-bar">
+                <i class="bi bi-search"></i>
+                <input type="text" placeholder="Search medicines, reports...">
+            </div>
+        </div>
+
+        <div class="feature-grid">
+            <a href="/upload" class="feature-card purple">
+                <i class="bi bi-cloud-arrow-up"></i>
+                <h3>Upload Prescription</h3>
+                <p>Upload and extract details using AI</p>
+            </a>
+            <a href="/medicines" class="feature-card green">
+                <i class="bi bi-capsule"></i>
+                <h3>Today's Medicines</h3>
+                <p>3 medicines pending</p>
+            </a>
+            <a href="/records" class="feature-card blue">
+                <i class="bi bi-file-earmark-text"></i>
+                <h3>Health Records</h3>
+                <p>View your medical history</p>
+            </a>
+            <a href="/profile" class="feature-card gray">
+                <i class="bi bi-person"></i>
+                <h3>Profile</h3>
+                <p>Manage your details</p>
+            </a>
+        </div>
+
+        <div class="reminders-section">
+            <div class="reminders-heading">
+                <h3>Upcoming Reminders</h3>
+                <a href="/medicines">View all</a>
+            </div>
+            <div class="reminder-card">
+                <div class="reminder-info">
+                    <p class="reminder-name">Paracetamol 650mg</p>
+                    <p class="reminder-time">08:00 AM</p>
+                </div>
+                <span class="badge pending">Pending</span>
+            </div>
+        </div>
+
+    </main>
+
+</body>
+</html>

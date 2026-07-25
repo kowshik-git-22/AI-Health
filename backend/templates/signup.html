@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="{{url_for('static',filename = 'css/style.css')}}">
+        <title>HealthConnect-Sign-up</title>
+    </head>
+    <body>
+        <div class="login-container">
+            <div class="logo-area">
+        <img src="{{url_for('static',filename = 'images/health1.png')}}" class="logo-img">
+        <h1>Health<span>Connect</span></h1>
+        </div>
+        <form class ="login-form" id="signupform">
+            <div class ="input-group">
+                <lable for = "name">Name</lable>
+                <input type ="text" id = "name"  placeholder = "name" required>
+            </div>
+            <div class ="input-group">
+                <lable for = "email">Email</lable>
+                <input type ="text" id = "email"  placeholder="Email" required>
+            </div>
+            <div class ="input-group">
+                <lable for ="phone">Phone Number</lable>
+                <input type ="tel" id="phone"  placeholder="Phone number">
+            </div>
+            <div class="input-group">
+                <lable for = "password">Password</lable>
+                <input type ="password" id ="password" placeholder="Password" required>
+            </div>
+            <div class = "input-group">
+                <lable for ="confirm password">Confirm password</lable>
+                <input type = "password" id = "confirmpassword"  placeholder="Confirm password" required>
+            </div>
+            <div class ="form-actions">
+                <lable class ="terms-condtions">
+                <input type="checkbox" required> I agree terms and condtions
+                </lable>
+            </div>
+            <button type ="submit" class ="btn-login">Create Account</button>
+            <p class ="signup-redirect">Already have an account?
+                <a href ="{{url_for('login')}}">Sign In</a>
+            </p>
+        </form>
+        </div>
+        <script src="{{url_for('static',filename='js/auth.js')}}"></script>
+    </body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="{{url_for('static',filename = 'css/style.css')}}">
+<title>Healthconnect-login</title>
+</head>
+<body>
+    <div class="login-container">
+    <div class="logo-area">
+        <img src="{{url_for('static',filename = 'images/health1.png')}}" class="logo-img">
+<h1>Health<span>connect</span><span></span></h1>
+    </div>
+    <form class ="login-form" id="loginform">
+        <div class ="input-group">
+            <label for ="email">Email or phone </label>
+            <input type ="text" id="email" placeholder="Email or phone">
+        </div>
+        <div class ="input-group">
+            <lable for ="password">Password</lable>
+            <input type ="password" id="password"placeholder="Password">
+        </div>
+        <div class ="form-actions">
+        <lable class ="remember-me">
+            <input type="checkbox">Remember Me 
+        </lable>
+        <a href="#" class="forgot-link">Forgot password?</a>
+    </div>
+    <button type="submit" class="btn-login">Sign In</button>
+    <p class ="signup-redirect">
+        Don't have an account? <a href = "{{url_for('signup')}}">Sign Up</a>
+    </p>
+    </form>
+    <script src ="{{url_for('static',filename = 'js/auth.js')}}"></script>
+</body>
+</html>
