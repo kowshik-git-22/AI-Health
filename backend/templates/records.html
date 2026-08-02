@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Health Records</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+</head>
+<body class="app-body">
+
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <span class="logo-text">Apricity <span class="accent">AI</span></span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard" class="nav-item"><i class="bi bi-house"></i> Home</a>
+            <a href="/medicines" class="nav-item"><i class="bi bi-capsule"></i> Medicines</a>
+            <a href="/records" class="nav-item active"><i class="bi bi-file-earmark-text"></i> Records</a>
+            <a href="/profile" class="nav-item"><i class="bi bi-person"></i> Profile</a>
+        </nav>
+        <a href="/logout" class="logout-link"><i class="bi bi-box-arrow-right"></i> Logout</a>
+    </aside>
+
+    <main class="main-content">
+
+    <h2 class="page-title">Health Records</h2>
+    <p class="page-subtitle">All your uploaded prescriptions in one place</p>
+
+    {% if records|length == 0 %}
+        <div class="empty-state">
+            <i class="bi bi-file-earmark-text empty-icon"></i>
+            <p>Your uploaded prescriptions will appear here.</p>
+            <a href="/upload" class="btn-upload">Upload a Prescription</a>
+        </div>
+    {% else %}
+        <div class="records-grid">
+            {% for rec in records %}
+            <div class="record-card" onclick="openLightbox('/uploads/{{ rec.filename }}')">
+                <div class="record-thumb">
+                    <img src="/uploads/{{ rec.filename }}" alt="Prescription">
+                </div>
+                <div class="record-info">
+                    <p class="record-condition">{{ rec.condition or "Prescription" }}</p>
+                    <p class="record-date">{{ rec.date }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div id="lightboxOverlay" class="lightbox-overlay" onclick="closeLightbox()">
+        <img id="lightboxImage" src="" alt="Full prescription">
+    </div>
+
+</main>
+<script>
+function openLightbox(imageUrl) {
+    document.getElementById("lightboxImage").src = imageUrl;
+    document.getElementById("lightboxOverlay").style.display = "flex";
+}
+function closeLightbox() {
+    document.getElementById("lightboxOverlay").style.display = "none";
+}
+</script>
+</body>
+</html>

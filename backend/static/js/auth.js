@@ -23,7 +23,7 @@ if (signupForm) {
         name: name,
         email: email,
         phone: phone,
-        password: password
+        password: password,
       })
     });
 
@@ -37,7 +37,7 @@ if (signupForm) {
     }
   });
 }
-
+/*LOGIN VALIDATION*/
 const loginForm = document.getElementById("loginform");
 if (loginForm) {
   loginForm.addEventListener("submit", async function(event) {

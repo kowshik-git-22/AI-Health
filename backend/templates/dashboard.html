@@ -9,7 +9,7 @@
 
     <aside class="sidebar">
         <div class="sidebar-logo">
-            <span class="logo-text">Health<span class="accent">Connect</span></span>
+            <span class="logo-text">Apricity <span class="accent">AI</span></span>
         </div>
         <nav class="sidebar-nav">
             <a href="/dashboard" class="nav-item active"><i class="bi bi-house"></i> Home</a>
@@ -27,10 +27,6 @@
                 <p class="greeting-sub">Good morning,</p>
                 <h2 class="greeting-name">{{ name }}</h2>
             </div>
-            <div class="search-bar">
-                <i class="bi bi-search"></i>
-                <input type="text" placeholder="Search medicines, reports...">
-            </div>
         </div>
 
         <div class="feature-grid">
@@ -42,12 +38,12 @@
             <a href="/medicines" class="feature-card green">
                 <i class="bi bi-capsule"></i>
                 <h3>Today's Medicines</h3>
-                <p>3 medicines pending</p>
+                <p>{{ medicine_count }} medicine{{ 's' if medicine_count != 1 else '' }} tracked</p>
             </a>
             <a href="/records" class="feature-card blue">
                 <i class="bi bi-file-earmark-text"></i>
                 <h3>Health Records</h3>
-                <p>View your medical history</p>
+                <p>{{ record_count }} record{{ 's' if record_count != 1 else '' }} saved</p>
             </a>
             <a href="/profile" class="feature-card gray">
                 <i class="bi bi-person"></i>
@@ -61,16 +57,112 @@
                 <h3>Upcoming Reminders</h3>
                 <a href="/medicines">View all</a>
             </div>
-            <div class="reminder-card">
-                <div class="reminder-info">
-                    <p class="reminder-name">Paracetamol 650mg</p>
-                    <p class="reminder-time">08:00 AM</p>
+            {% if upcoming|length == 0 %}
+                <div class="empty-state">
+                    <i class="bi bi-capsule empty-icon"></i>
+                    <p>No medicines added yet.</p>
+                    <a href="/upload" class="btn-upload">Upload a Prescription</a>
                 </div>
-                <span class="badge pending">Pending</span>
-            </div>
+            {% else %}
+                {% for item in upcoming %}
+                <div class="reminder-card">
+                    <div class="reminder-info">
+                        <p class="reminder-name">{{ item.name }}</p>
+                        <p class="reminder-time">{{ item.timing }}</p>
+                    </div>
+                    <button class="badge-btn {{ item.status }}" onclick="markTaken({{ item.id }}, this)" {% if item.status == 'taken' %}disabled{% endif %}>
+                        {{ "Taken" if item.status == "taken" else "Mark as Taken" }}
+                    </button>
+                </div>
+                {% endfor %}
+            {% endif %}
         </div>
 
     </main>
 
+    <aside class="chat-panel" id="chatPanel">
+    <div class="chat-header">
+        <i class="bi bi-stars"></i> Ask Apricity AI
+        <button class="chat-close-btn" onclick="toggleChat()">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+    <div id="chatMessages" class="chat-messages">
+        <div class="chat-bubble bot">Hi! Ask me anything about your medicines or symptoms.</div>
+    </div>
+    <div class="chat-input-row">
+        <input type="text" id="chatInput" placeholder="Type a question...">
+        <button id="chatSendBtn"><i class="bi bi-send"></i></button>
+    </div>
+</aside>
+
+<button class="chat-toggle-btn" onclick="toggleChat()">
+    <i class="bi bi-chat-dots"></i>
+</button>
+    <script>
+let chatHistory = [];
+
+document.getElementById("chatSendBtn").addEventListener("click", sendChat);
+document.getElementById("chatInput").addEventListener("keypress", function(e) {
+    if (e.key === "Enter") sendChat();
+});
+
+async function sendChat() {
+    const input = document.getElementById("chatInput");
+    const message = input.value.trim();
+    if (!message) return;
+
+    const messages = document.getElementById("chatMessages");
+
+    const userBubble = document.createElement("div");
+    userBubble.className = "chat-bubble user";
+    userBubble.textContent = message;
+    messages.appendChild(userBubble);
+
+    chatHistory.push({ role: "user", text: "User: " + message });
+
+    input.value = "";
+    messages.scrollTop = messages.scrollHeight;
+
+    const typingBubble = document.createElement("div");
+    typingBubble.className = "chat-bubble bot";
+    typingBubble.textContent = "Typing...";
+    messages.appendChild(typingBubble);
+    messages.scrollTop = messages.scrollHeight;
+
+    const response = await fetch("/api/chat", {
+        
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: message, history: chatHistory })
+    });
+
+    const data = await response.json();
+    
+    const reply = response.ok ? data.reply : "Sorry, something went wrong.";
+    typingBubble.textContent = reply;
+
+    if (response.ok) {
+        chatHistory.push({ role: "bot", text: "Assistant: " + reply });
+    }
+
+    messages.scrollTop = messages.scrollHeight;
+}
+
+async function markTaken(id, btn) {
+    const response = await fetch("/api/mark-dose/" + id, { method: "POST" });
+    if (response.ok) {
+        btn.textContent = "Taken";
+        btn.classList.remove("pending");
+        btn.classList.add("taken");
+        btn.disabled = true;
+    } else {
+        alert("Could not update this medicine.");
+    }
+}
+function toggleChat() {
+    document.getElementById("chatPanel").classList.toggle("open");
+}
+</script>
 </body>
 </html>

@@ -9,7 +9,7 @@
 
     <aside class="sidebar">
         <div class="sidebar-logo">
-            <span class="logo-text">Health<span class="accent">Connect</span></span>
+            <span class="logo-text">Apricity <span class="accent">AI</span></span>
         </div>
         <nav class="sidebar-nav">
             <a href="/dashboard" class="nav-item"><i class="bi bi-house"></i> Home</a>
@@ -30,7 +30,7 @@
             <h3>Upload Prescription Image</h3>
             <p>JPG, PNG or PDF (Max. 10MB)</p>
             <label for="prescriptionFile" class="btn-upload">Choose File</label>
-            <input type="file" id="prescriptionFile" accept=".jpg,.jpeg,.png,.pdf" hidden>
+            <input type="file" id="prescriptionFile" name="prescription" accept=".jpg,.jpeg,.png,.pdf" hidden>
             <p id="fileName" class="file-name"></p>
         </div>
 
@@ -44,9 +44,79 @@
         <div class="ai-result-box">
             <h4>AI extracted details</h4>
             <textarea id="aiOutput" class="ai-textarea" placeholder="Extracted medicine names, dosage, frequency, and instructions will appear here after you upload a prescription."></textarea>
+            <button id="saveMedicinesBtn" class="btn-save-medicines" style="display:none;">
+    <i class="bi bi-bookmark-check"></i> Save to My Medicines
+</button>
         </div>
 
     </main>
+    <script>
+let extractedMedicines = [];
 
+document.getElementById("prescriptionFile").addEventListener("change", async function() {
+    const file = this.files[0];
+    if (!file) return;
+
+    document.getElementById("fileName").textContent = file.name;
+    document.getElementById("aiOutput").value = "Reading prescription, please wait...";
+    document.getElementById("saveMedicinesBtn").style.display = "none";
+
+    const formData = new FormData();
+    formData.append("prescription", file);
+
+    const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+        extractedMedicines = data.medicines;
+
+        let display = "";
+
+        display += "CONDITION\n";
+        display += data.condition + "\n\n";
+
+        display += "MEDICINES\n";
+        data.medicines.forEach(function(med) {
+            display += med.name;
+            if (med.dosage) display += " (" + med.dosage + ")";
+            display += "\n";
+            display += "  Timing: " + med.frequency + "   |   " + med.instruction + "\n\n";
+        });
+
+        display += "CARE TIPS\n";
+        data.care_tips.forEach(function(tip) {
+            display += "- " + tip + "\n";
+        });
+
+        display += "\n" + data.disclaimer;
+
+        document.getElementById("aiOutput").value = display;
+        document.getElementById("saveMedicinesBtn").style.display = "inline-block";
+    } else {
+        document.getElementById("aiOutput").value = "Error: " + data.message;
+    }
+});
+
+document.getElementById("saveMedicinesBtn").addEventListener("click", async function() {
+    const response = await fetch("/api/save-medicines", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ medicines: extractedMedicines })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+        alert("Medicines saved successfully!");
+        window.location.href = "/medicines";
+    } else {
+        alert("Error: " + data.message);
+    }
+});
+</script>
 </body>
 </html>

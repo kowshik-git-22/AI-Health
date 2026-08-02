@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Medicines</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+</head>
+<body class="app-body">
+
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <span class="logo-text">Apricity <span class="accent">AI</span></span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard" class="nav-item"><i class="bi bi-house"></i> Home</a>
+            <a href="/medicines" class="nav-item active"><i class="bi bi-capsule"></i> Medicines</a>
+            <a href="/records" class="nav-item"><i class="bi bi-file-earmark-text"></i> Records</a>
+            <a href="/profile" class="nav-item"><i class="bi bi-person"></i> Profile</a>
+        </nav>
+        <a href="/logout" class="logout-link"><i class="bi bi-box-arrow-right"></i> Logout</a>
+    </aside>
+
+    <main class="main-content">
+
+        <h2 class="page-title">Today's Medicines</h2>
+        <p class="page-subtitle">Track and manage your daily doses</p>
+
+        <div class="tab-row">
+            <span class="tab active" data-filter="all">All</span>
+            <span class="tab" data-filter="morning">Morning</span>
+            <span class="tab" data-filter="afternoon">Afternoon</span>
+            <span class="tab" data-filter="night">Night</span>
+        </div>
+
+        {% if medicines|length == 0 %}
+            <div class="empty-state">
+                <i class="bi bi-capsule empty-icon"></i>
+                <p>No medicines saved yet.</p>
+                <a href="/upload" class="btn-upload">Upload a Prescription</a>
+            </div>
+        {% else %}
+            {% for med in medicines %}
+            <div class="medicine-card" data-slots="{{ med.slots }}">
+                <div>
+                    <p class="medicine-name">{{ med.name }}{% if med.dosage %} ({{ med.dosage }}){% endif %}</p>
+                    <p class="medicine-detail">{{ med.frequency }} - {{ med.instruction }}</p>
+                </div>
+                <div class="medicine-actions">
+                    <button class="badge-btn {{ med.status }}" onclick="markTaken({{ med.id }}, this)" {% if med.status == 'taken' %}disabled{% endif %}>
+    {{ "Taken" if med.status == "taken" else "Mark as Taken" }}
+</button>
+                    <button class="delete-btn" onclick="deleteMedicine({{ med.id }}, this)">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        <p id="noMedicinesMsg" style="display:none; text-align:center; color:#8892a0; padding:30px 0;">
+            No medicines scheduled for this time.
+        </p>
+
+    </main>
+
+    <script>
+document.querySelectorAll(".tab").forEach(function(tab) {
+    tab.addEventListener("click", function() {
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+        this.classList.add("active");
+
+        const filter = this.getAttribute("data-filter");
+        let visibleCount = 0;
+
+        document.querySelectorAll(".medicine-card").forEach(function(card) {
+            const slots = card.getAttribute("data-slots").split(",");
+            if (filter === "all" || slots.includes(filter)) {
+                card.style.display = "flex";
+                visibleCount++;
+            } else {
+                card.style.display = "none";
+            }
+        });
+
+        const emptyMsg = document.getElementById("noMedicinesMsg");
+        if (visibleCount === 0) {
+            emptyMsg.textContent = "No medicines scheduled for " + this.textContent.trim() + ".";
+            emptyMsg.style.display = "block";
+        } else {
+            emptyMsg.style.display = "none";
+        }
+    });
+});
+
+async function deleteMedicine(id, btn) {
+    if (!confirm("Remove this medicine from your list?")) return;
+
+    const response = await fetch("/api/delete-medicine/" + id, {
+        method: "POST"
+    });
+
+    if (response.ok) {
+        btn.closest(".medicine-card").remove();
+    } else {
+        alert("Could not delete this medicine.");
+    }
+}
+
+async function markTaken(id, btn) {
+    const response = await fetch("/api/mark-dose/" + id, { method: "POST" });
+    if (response.ok) {
+        btn.textContent = "Taken";
+        btn.classList.remove("pending");
+        btn.classList.add("taken");
+        btn.disabled = true;
+    } else {
+        alert("Could not update this medicine.");
+    }
+}
+</script>
+
+</body>
+</html>
