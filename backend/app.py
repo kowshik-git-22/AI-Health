@@ -59,7 +59,8 @@ def init_db():
 
 
 app = Flask(__name__)
-app.secret_key="replace_this_with_something_random_later"
+
+app.secret_key = os.getenv("SECRET_KEY", "replace_this_with_something_random_later")
 
 @app.route("/api/signup", methods=["POST"])
 def api_signup():
