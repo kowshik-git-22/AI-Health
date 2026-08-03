@@ -10,6 +10,9 @@ body{
     align-items: center;
     min-height:100vh;
 }
+body {
+    overflow-x: hidden;
+}
 .logo-img{
     width:70px;
     height:100px;
