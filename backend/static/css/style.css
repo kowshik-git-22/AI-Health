@@ -896,3 +896,12 @@ body {
 .chat-page-box .chat-messages{
     flex:1;
 }
+@media (min-width: 769px) {
+    .chat-page-main{
+        max-width: 1100px;
+    }
+    .chat-page-box{
+        max-width: 800px;
+        margin: 0 auto;
+    }
+}
