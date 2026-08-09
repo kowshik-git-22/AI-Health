@@ -480,6 +480,10 @@ def api_chat():
     return jsonify({"reply": response.text}), 200
 
 
+@app.route('/chat')
+def chat():
+    return render_template('chat.html', name=session.get('name'))  # match however you pass user data elsewhere
+
 
 
 

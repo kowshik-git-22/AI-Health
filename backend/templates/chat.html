@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ask AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+</head>
+<body class="app-body">
+
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <span class="logo-text">Apricity <span class="accent">AI</span></span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard" class="nav-item"><i class="bi bi-house"></i> Home</a>
+            <a href="/medicines" class="nav-item"><i class="bi bi-capsule"></i> Medicines</a>
+            <a href="/records" class="nav-item"><i class="bi bi-file-earmark-text"></i> Records</a>
+            <a href="/profile" class="nav-item"><i class="bi bi-person"></i> Profile</a>
+            <a href="/chat" class="nav-item active"><i class="bi bi-chat-dots"></i> Ask AI</a>
+        </nav>
+        <a href="/logout" class="logout-link"><i class="bi bi-box-arrow-right"></i> Logout</a>
+    </aside>
+
+    <main class="main-content">
+
+        <div class="dashboard-header">
+            <div>
+                <p class="greeting-sub">Chat with</p>
+                <h2 class="greeting-name">Apricity AI</h2>
+            </div>
+        </div>
+
+        <div class="chat-page-box">
+            <div id="chatMessages" class="chat-messages">
+                <div class="chat-bubble bot">Hi! Ask me anything about your medicines or symptoms.</div>
+            </div>
+            <div class="chat-input-row">
+                <input type="text" id="chatInput" placeholder="Type a question...">
+                <button id="chatSendBtn"><i class="bi bi-send"></i></button>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+let chatHistory = [];
+
+document.getElementById("chatSendBtn").addEventListener("click", sendChat);
+document.getElementById("chatInput").addEventListener("keypress", function(e) {
+    if (e.key === "Enter") sendChat();
+});
+
+async function sendChat() {
+    const input = document.getElementById("chatInput");
+    const message = input.value.trim();
+    if (!message) return;
+
+    const messages = document.getElementById("chatMessages");
+
+    const userBubble = document.createElement("div");
+    userBubble.className = "chat-bubble user";
+    userBubble.textContent = message;
+    messages.appendChild(userBubble);
+
+    chatHistory.push({ role: "user", text: "User: " + message });
+
+    input.value = "";
+    messages.scrollTop = messages.scrollHeight;
+
+    const typingBubble = document.createElement("div");
+    typingBubble.className = "chat-bubble bot";
+    typingBubble.textContent = "Typing...";
+    messages.appendChild(typingBubble);
+    messages.scrollTop = messages.scrollHeight;
+
+    const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: message, history: chatHistory })
+    });
+
+    const data = await response.json();
+
+    const reply = response.ok ? data.reply : "Sorry, something went wrong.";
+    typingBubble.textContent = reply;
+
+    if (response.ok) {
+        chatHistory.push({ role: "bot", text: "Assistant: " + reply });
+    }
+
+    messages.scrollTop = messages.scrollHeight;
+}
+</script>
+</body>
+</html>
