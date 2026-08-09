@@ -122,22 +122,20 @@ body {
     background:#f4f6fb;
 }
 
-   .sidebar{
-        position: fixed;
-        top: auto;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        width: 100%;
-        height: 64px;
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-around;
-        padding: 0;
-        border-top: 1px solid #e2e8f0;
-        border-right: none;
-        z-index: 100;
-    }
+.sidebar{
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 220px;
+    height: 100vh;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    padding: 24px 16px;
+    border-right: 1px solid #e2e8f0;
+    z-index: 100;
+}
 .sidebar-logo{
     margin-bottom:30px;
     padding:0 8px;
@@ -660,21 +658,28 @@ body {
     transform:scale(0.98);
 }
 /*chat bot css*/
-.app-body{
-    display:flex;
-}
 .chat-panel{
-        position: fixed;
-        top: 0;
-        right: 0;
-        bottom: 64px;
-        left: 0;
-        width: 100%;
-        height: auto;
-        z-index: 200;
-        transform: translateY(100%);
-        transition: transform 0.25s ease;
-    }
+    position: fixed;
+    bottom: 100px;
+    right: 24px;
+    width: 360px;
+    height: 480px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    z-index: 200;
+    transform: scale(0.95) translateY(20px);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.25s ease;
+}
+.chat-panel.open{
+    transform: scale(1) translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+}
 .chat-header{
     padding:18px 20px;
     font-size:15px;
