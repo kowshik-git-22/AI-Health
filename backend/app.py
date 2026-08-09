@@ -536,6 +536,18 @@ def api_mark_dose(medicine_id):
 
 
 
+
+@app.route("/admin/users")
+def admin_users():
+    conn = sqlite3.connect("healthconnect.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name, email, phone FROM users")
+    rows = cursor.fetchall()
+    conn.close()
+    return jsonify(rows)
+
+
+
 init_db()
 
 if __name__ == "__main__":
