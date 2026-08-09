@@ -378,7 +378,7 @@ def api_upload():
         {"name": "", "dosage": "", "frequency": "", "instruction": ""}
       ],
       "care_tips": [
-        "4 to 6 short, general self-care tips relevant to this condition, such as rest, hydration, or diet advice"
+        "5 to 7 short, general self-care tips relevant to this condition, such as rest, hydration, or diet advice"
       ],
       "disclaimer": "A short reminder that this is AI-generated guidance and the user should follow their doctor's advice and consult them with any concerns"
     }
