@@ -43,13 +43,14 @@ if (loginForm) {
   loginForm.addEventListener("submit", async function(event) {
     event.preventDefault();
 
-    const email = document.getElementById("email").value;
+    const identifier = document.getElementById("identifier").value;
     const password = document.getElementById("password").value;
+    const remember = document.getElementById("remember").checked;
 
     const response = await fetch("/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ identifier, password, remember })
     });
 
     const data = await response.json();

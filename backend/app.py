@@ -57,10 +57,11 @@ def init_db():
     conn.commit()
     conn.close()
 
-
+from datetime import timedelta
 app = Flask(__name__)
 
 app.secret_key = os.getenv("SECRET_KEY", "replace_this_with_something_random_later")
+app.permanent_session_lifetime = timedelta(days=30)
 
 @app.route("/api/signup", methods=["POST"])
 def api_signup():
@@ -98,29 +99,33 @@ def api_signup():
 @app.route("/api/login", methods=["POST"])
 def api_login():
     data = request.get_json()
-    email = data.get("email")
+    identifier = data.get("identifier")
     password = data.get("password")
+    remember = data.get("remember", False)
 
     conn = sqlite3.connect("healthconnect.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT id, name, password FROM users WHERE email = ?", (email,))
+    cursor.execute(
+        "SELECT id, name, password FROM users WHERE email = ? OR phone = ?",
+        (identifier, identifier)
+    )
     row = cursor.fetchone()
     conn.close()
 
     if row is None:
-        return jsonify({"message": "Invalid email or password"}), 401
+        return jsonify({"message": "Invalid email/phone or password"}), 401
 
     user_id, name, hashed_password = row
 
     from werkzeug.security import check_password_hash
     if not check_password_hash(hashed_password, password):
-        return jsonify({"message": "Invalid email or password"}), 401
+        return jsonify({"message": "Invalid email/phone or password"}), 401
 
+    session.permanent = bool(remember)
     session["user_id"] = user_id
     session["user_name"] = name
 
     return jsonify({"message": "Login successful"}), 200
-
     
 @app.route("/")
 def login():
@@ -483,6 +488,13 @@ def blood():
     if "user_id" not in session:
         return redirect(url_for("login_page"))
     return render_template("blood.html",name=session.get("user_name"))
+
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login_page"))
 
 
 
