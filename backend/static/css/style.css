@@ -847,7 +847,7 @@ body {
 }
 
 .chat-toggle-btn{
-    display: none;
+    display: flex;
     position: fixed;
     bottom: 80px;
     right: 20px;
