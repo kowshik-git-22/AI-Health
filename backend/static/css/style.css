@@ -842,7 +842,7 @@ body {
     }
 
     .chat-toggle-btn{
-        display: flex;
+        display: none;
     }
 }
 
