@@ -84,7 +84,7 @@
     <aside class="chat-panel" id="chatPanel">
     <div class="chat-header">
         <i class="bi bi-stars"></i> Ask Apricity AI
-        <button class="chat-close-btn" onclick="closeChat()">
+        <button class="chat-close-btn" onclick="toggleChat()">
             <i class="bi bi-x-lg"></i>
         </button>
     </div>
@@ -97,7 +97,7 @@
     </div>
 </aside>
 
-<button class="chat-toggle-btn" onclick="openChat()">
+<button class="chat-toggle-btn" onclick="toggleChat()">
     <i class="bi bi-chat-dots"></i>
 </button>
     <script>
@@ -161,11 +161,8 @@ async function markTaken(id, btn) {
         alert("Could not update this medicine.");
     }
 }
-function openChat() {
-    document.getElementById("chatPanel").classList.add("open");
-}
-function closeChat() {
-    document.getElementById("chatPanel").classList.remove("open");
+function toggleChat() {
+    document.getElementById("chatPanel").classList.toggle("open");
 }
 </script>
 </body>
