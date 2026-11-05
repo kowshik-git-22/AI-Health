@@ -1,16 +1,16 @@
 import os
-from dotenv import load_dotenv #loads hidden env file
+from dotenv import load_dotenv
 load_dotenv()
 from google import genai
 from google.genai import types
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")#this will check and load the api key
-client = genai.Client(api_key=GEMINI_API_KEY)#creating a client to read prescption like calling model where ever we want
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+client = genai.Client(api_key=GEMINI_API_KEY)
 from flask import Flask, render_template,request,jsonify,session,redirect,url_for
 import sqlite3
 from werkzeug.security import generate_password_hash
 
 def init_db():
-    conn = sqlite3.connect("healthconnect.db")#creates local data base
+    conn = sqlite3.connect("healthconnect.db")
 
     conn.execute("""
         CREATE TABLE IF NOT EXISTS users (
@@ -58,32 +58,37 @@ def init_db():
     conn.close()
 
 from datetime import timedelta
-app = Flask(__name__)#creates the web server object. All routes and settings are registered on this object.”
+app = Flask(__name__)
 
 app.secret_key = os.getenv("SECRET_KEY", "replace_this_with_something_random_later")
 app.permanent_session_lifetime = timedelta(days=30)
-            #this is the url path
-@app.route("/api/signup", methods=["POST"])#post means it only accepts post requests use in sending form
+
+@app.route("/api/signup", methods=["POST"])
 def api_signup():
-    data = request.get_json()#json is just a text format for sending data between a browser and server
+    data = request.get_json()
+
     name = data.get("name")
     email = data.get("email")
     phone = data.get("phone")
     password = data.get("password")
-    if not name or not email or not password:# used to not show an error when json returns empty
+
+    if not name or not email or not password:
         return jsonify({"message": "Please fill in all required fields"}), 400
 
     hashed_password = generate_password_hash(password)
-    conn = sqlite3.connect("healthconnect.db")#opens a connection to database file
-    cursor = conn.cursor()#A cursor is the pen that runs commands on the database, conn is the connection, cursor is what actually sends SQL commands
+
+    conn = sqlite3.connect("healthconnect.db")
+    cursor = conn.cursor()
+
     try:
         cursor.execute(
-            "INSERT INTO users (name, email, phone, password) VALUES (?, ?, ?, ?)",# placeholders Each ? gets filled by the matching item in the bracket on the next line, in order: name, email, phone, hashed password
+            "INSERT INTO users (name, email, phone, password) VALUES (?, ?, ?, ?)",
             (name, email, phone, hashed_password)
         )
 
         conn.commit()
-    except sqlite3.IntegrityError:#two user cant have same name in my app
+
+    except sqlite3.IntegrityError:
         conn.close()
         return jsonify({"message": "Email already registered"}), 409
 
@@ -94,7 +99,7 @@ def api_signup():
 @app.route("/api/login", methods=["POST"])
 def api_login():
     data = request.get_json()
-    identifier = data.get("identifier")#can be an email or password
+    identifier = data.get("identifier")
     password = data.get("password")
     remember = data.get("remember", False)
 
@@ -104,13 +109,13 @@ def api_login():
         "SELECT id, name, password FROM users WHERE email = ? OR phone = ?",
         (identifier, identifier)
     )
-    row = cursor.fetchone()#fetchone() takes the first matching row. It comes back
+    row = cursor.fetchone()
     conn.close()
 
     if row is None:
         return jsonify({"message": "Invalid email/phone or password"}), 401
 
-    user_id, name, hashed_password = row#Unpacks the tuple into three variables. If row is (1, "abcd", "scrypt:..."), then user_id = 1, name = "abcd", hashed_password = "scrypt:...".
+    user_id, name, hashed_password = row
 
     from werkzeug.security import check_password_hash
     if not check_password_hash(hashed_password, password):
@@ -122,6 +127,29 @@ def api_login():
 
     return jsonify({"message": "Login successful"}), 200
     
+@app.route("/")
+def login():
+    return render_template("login.html")
+
+
+
+
+@app.route("/login")
+def login_page():
+    return render_template("login.html")
+
+
+
+
+
+@app.route("/signup")
+def signup():
+    return render_template("signup.html")
+
+
+
+
+
 @app.route("/dashboard")
 def dashboard():
     if "user_id" not in session:
@@ -171,6 +199,10 @@ def dashboard():
     )
 
 
+
+
+
+
 @app.route("/profile")
 def profile():
     if "user_id" not in session:
@@ -183,6 +215,9 @@ def profile():
     conn.close()
 
     return render_template("profile.html", name=user[0], email=user[1], phone=user[2])
+
+
+
 
 
 
@@ -205,6 +240,9 @@ def records():
     return render_template("records.html", name=session.get("user_name"), records=record_list)
 
 
+
+
+
 from flask import send_from_directory
 
 @app.route("/uploads/<filename>")
@@ -214,11 +252,15 @@ def serve_upload(filename):
     return send_from_directory("uploads", filename)
 
 
+
+
 @app.route("/upload")
 def upload():
     if "user_id" not in session:
         return redirect(url_for("login_page"))
     return render_template("upload.html",name=session.get("user_name"))
+
+
 
 
 @app.route("/medicines")
@@ -282,6 +324,8 @@ def medicines():
 
 
 
+
+
 @app.route("/api/delete-medicine/<int:medicine_id>", methods=["POST"])
 def api_delete_medicine(medicine_id):
     if "user_id" not in session:
@@ -299,6 +343,11 @@ def api_delete_medicine(medicine_id):
     return jsonify({"message": "Deleted"}), 200
 
 
+
+
+
+
+       
 import time
 
 @app.route("/api/upload", methods=["POST"])
@@ -369,6 +418,8 @@ def api_upload():
 
 
 
+
+
 @app.route("/api/save-medicines", methods=["POST"])
 def api_save_medicines():
     if "user_id" not in session:
@@ -434,10 +485,22 @@ def chat():
     return render_template('chat.html', name=session.get('name'))  # match however you pass user data elsewhere
 
 
+
+
+@app.route("/blood")
+def blood():
+    if "user_id" not in session:
+        return redirect(url_for("login_page"))
+    return render_template("blood.html",name=session.get("user_name"))
+
+
+
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("login_page"))
+
+
 
 
 #Dose taken 
