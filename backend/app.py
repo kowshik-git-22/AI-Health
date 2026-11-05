@@ -9,23 +9,12 @@ import time
 
 # Models are tried in this order. If one is busy (503) or unavailable, the next one is used.
 MODELS = [
-    # 1. Very fast, light, current primary
-    "gemini-3.5-flash-lite",
-
-    # 2. Dedicated previous lite version (minimal traffic, highly reliable)
-    "gemini-3.1-flash-lite",
-
-    # 3. Established generation workhorse (mature, isolated traffic pool)
-    "gemini-2.5-flash-lite",
-
-    # 4. Standard flash tier with great throughput
-    "gemini-3.6-flash",
-
-    # 5. Dependable fallback
-    "gemini-2.5-flash",
-
-    # 6. Official floating light alias
-    "gemini-flash-lite-latest",
+    "gemini-3.5-flash-lite",     # 1. very fast, light, current primary
+    "gemini-3.1-flash-lite",     # 2. previous lite version
+    "gemini-2.5-flash-lite",     # 3. established lite model
+    "gemini-3.6-flash",          # 4. standard flash tier
+    "gemini-2.5-flash",          # 5. dependable fallback
+    "gemini-flash-lite-latest",  # 6. official floating light alias
 ]
 
 def ask_gemini(contents):
@@ -40,10 +29,9 @@ def ask_gemini(contents):
                 print(f"{model} failed (try {attempt + 1}):", e)
                 msg = str(e)
                 if "404" in msg or "NOT_FOUND" in msg or "429" in msg:
-                    break                     # model missing or out of quota: go to the next model now
+                    break                     # model missing or out of quota: next model now
                 time.sleep(1)                 # 503 busy: wait a second, retry
-    return None
-                               # every model failed
+    return None                               # every model failed
 from flask import Flask, render_template,request,jsonify,session,redirect,url_for
 import sqlite3
 from werkzeug.security import generate_password_hash
@@ -103,6 +91,17 @@ app.secret_key = os.getenv("SECRET_KEY", "replace_this_with_something_random_lat
 app.permanent_session_lifetime = timedelta(days=30)
 os.makedirs("uploads", exist_ok=True)  # Render wipes this folder on redeploy
             #this is the url path
+@app.route("/")
+@app.route("/login")
+def login_page():
+    return render_template("login.html")
+
+
+@app.route("/signup")
+def signup_page():
+    return render_template("signup.html")
+
+
 @app.route("/api/signup", methods=["POST"])#post means it only accepts post requests use in sending form
 def api_signup():
     data = request.get_json()#json is just a text format for sending data between a browser and server
