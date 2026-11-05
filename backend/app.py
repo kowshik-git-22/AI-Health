@@ -5,33 +5,6 @@ from google import genai
 from google.genai import types
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")#this will check and load the api key
 client = genai.Client(api_key=GEMINI_API_KEY)#creating a client to read prescption like calling model where ever we want
-import time
-
-# Models are tried in this order. If one is busy (503) or unavailable, the next one is used.
-MODELS = [
-    "gemini-3.5-flash-lite",     # 1. very fast, light, current primary
-    "gemini-3.1-flash-lite",     # 2. previous lite version
-    "gemini-2.5-flash-lite",     # 3. established lite model
-    "gemini-3.6-flash",          # 4. standard flash tier
-    "gemini-2.5-flash",          # 5. dependable fallback
-    "gemini-flash-lite-latest",  # 6. official floating light alias
-]
-
-def ask_gemini(contents):
-    for model in MODELS:
-        for attempt in range(2):              # try each model up to twice
-            try:
-                response = client.models.generate_content(model=model, contents=contents)
-                if response.text:
-                    print("Answered by:", model)
-                    return response
-            except Exception as e:
-                print(f"{model} failed (try {attempt + 1}):", e)
-                msg = str(e)
-                if "404" in msg or "NOT_FOUND" in msg or "429" in msg:
-                    break                     # model missing or out of quota: next model now
-                time.sleep(1)                 # 503 busy: wait a second, retry
-    return None                               # every model failed
 from flask import Flask, render_template,request,jsonify,session,redirect,url_for
 import sqlite3
 from werkzeug.security import generate_password_hash
@@ -89,19 +62,7 @@ app = Flask(__name__)#creates the web server object. All routes and settings are
 
 app.secret_key = os.getenv("SECRET_KEY", "replace_this_with_something_random_later")
 app.permanent_session_lifetime = timedelta(days=30)
-os.makedirs("uploads", exist_ok=True)  # Render wipes this folder on redeploy
             #this is the url path
-@app.route("/")
-@app.route("/login")
-def login_page():
-    return render_template("login.html")
-
-
-@app.route("/signup")
-def signup_page():
-    return render_template("signup.html")
-
-
 @app.route("/api/signup", methods=["POST"])#post means it only accepts post requests use in sending form
 def api_signup():
     data = request.get_json()#json is just a text format for sending data between a browser and server
@@ -376,12 +337,13 @@ def api_upload():
     Keep every field concise and in plain language, suitable for a patient with no medical background.
     """
 
-    response = ask_gemini([
-        types.Part.from_bytes(data=image_bytes, mime_type=file.mimetype),
-        prompt
-    ])
-    if response is None:
-        return jsonify({"message": "AI is busy right now. Please try again in a minute."}), 503
+    response = client.models.generate_content(
+        model="gemini-3.5-flash-lite",
+        contents=[
+            types.Part.from_bytes(data=image_bytes, mime_type=file.mimetype),
+            prompt
+        ]
+    )
 
     raw_text = response.text.strip()
     if raw_text.startswith("```"):
@@ -459,9 +421,10 @@ def api_chat():
     {conversation_text}
     """
 
-    response = ask_gemini(prompt)
-    if response is None:
-        return jsonify({"reply": "AI is busy right now. Please try again in a minute."}), 200
+    response = client.models.generate_content(
+        model="gemini-3.5-flash-lite",
+        contents=prompt
+    )
 
     return jsonify({"reply": response.text}), 200
 
