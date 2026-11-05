@@ -1,16 +1,55 @@
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv #loads hidden env file
 load_dotenv()
 from google import genai
 from google.genai import types
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-client = genai.Client(api_key=GEMINI_API_KEY)
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")#this will check and load the api key
+client = genai.Client(api_key=GEMINI_API_KEY)#creating a client to read prescption like calling model where ever we want
+import time
+
+# Models are tried in this order. If one is busy (503) or unavailable, the next one is used.
+MODELS = [
+    # 1. Very fast, light, current primary
+    "gemini-3.5-flash-lite",
+
+    # 2. Dedicated previous lite version (minimal traffic, highly reliable)
+    "gemini-3.1-flash-lite",
+
+    # 3. Established generation workhorse (mature, isolated traffic pool)
+    "gemini-2.5-flash-lite",
+
+    # 4. Standard flash tier with great throughput
+    "gemini-3.6-flash",
+
+    # 5. Dependable fallback
+    "gemini-2.5-flash",
+
+    # 6. Official floating light alias
+    "gemini-flash-lite-latest",
+]
+
+def ask_gemini(contents):
+    for model in MODELS:
+        for attempt in range(2):              # try each model up to twice
+            try:
+                response = client.models.generate_content(model=model, contents=contents)
+                if response.text:
+                    print("Answered by:", model)
+                    return response
+            except Exception as e:
+                print(f"{model} failed (try {attempt + 1}):", e)
+                msg = str(e)
+                if "404" in msg or "NOT_FOUND" in msg or "429" in msg:
+                    break                     # model missing or out of quota: go to the next model now
+                time.sleep(1)                 # 503 busy: wait a second, retry
+    return None
+                               # every model failed
 from flask import Flask, render_template,request,jsonify,session,redirect,url_for
 import sqlite3
 from werkzeug.security import generate_password_hash
 
 def init_db():
-    conn = sqlite3.connect("healthconnect.db")
+    conn = sqlite3.connect("healthconnect.db")#creates local data base
 
     conn.execute("""
         CREATE TABLE IF NOT EXISTS users (
@@ -58,37 +97,33 @@ def init_db():
     conn.close()
 
 from datetime import timedelta
-app = Flask(__name__)
+app = Flask(__name__)#creates the web server object. All routes and settings are registered on this object.”
 
 app.secret_key = os.getenv("SECRET_KEY", "replace_this_with_something_random_later")
 app.permanent_session_lifetime = timedelta(days=30)
-
-@app.route("/api/signup", methods=["POST"])
+os.makedirs("uploads", exist_ok=True)  # Render wipes this folder on redeploy
+            #this is the url path
+@app.route("/api/signup", methods=["POST"])#post means it only accepts post requests use in sending form
 def api_signup():
-    data = request.get_json()
-
+    data = request.get_json()#json is just a text format for sending data between a browser and server
     name = data.get("name")
     email = data.get("email")
     phone = data.get("phone")
     password = data.get("password")
-
-    if not name or not email or not password:
+    if not name or not email or not password:# used to not show an error when json returns empty
         return jsonify({"message": "Please fill in all required fields"}), 400
 
     hashed_password = generate_password_hash(password)
-
-    conn = sqlite3.connect("healthconnect.db")
-    cursor = conn.cursor()
-
+    conn = sqlite3.connect("healthconnect.db")#opens a connection to database file
+    cursor = conn.cursor()#A cursor is the pen that runs commands on the database, conn is the connection, cursor is what actually sends SQL commands
     try:
         cursor.execute(
-            "INSERT INTO users (name, email, phone, password) VALUES (?, ?, ?, ?)",
+            "INSERT INTO users (name, email, phone, password) VALUES (?, ?, ?, ?)",# placeholders Each ? gets filled by the matching item in the bracket on the next line, in order: name, email, phone, hashed password
             (name, email, phone, hashed_password)
         )
 
         conn.commit()
-
-    except sqlite3.IntegrityError:
+    except sqlite3.IntegrityError:#two user cant have same name in my app
         conn.close()
         return jsonify({"message": "Email already registered"}), 409
 
@@ -99,7 +134,7 @@ def api_signup():
 @app.route("/api/login", methods=["POST"])
 def api_login():
     data = request.get_json()
-    identifier = data.get("identifier")
+    identifier = data.get("identifier")#can be an email or password
     password = data.get("password")
     remember = data.get("remember", False)
 
@@ -109,13 +144,13 @@ def api_login():
         "SELECT id, name, password FROM users WHERE email = ? OR phone = ?",
         (identifier, identifier)
     )
-    row = cursor.fetchone()
+    row = cursor.fetchone()#fetchone() takes the first matching row. It comes back
     conn.close()
 
     if row is None:
         return jsonify({"message": "Invalid email/phone or password"}), 401
 
-    user_id, name, hashed_password = row
+    user_id, name, hashed_password = row#Unpacks the tuple into three variables. If row is (1, "abcd", "scrypt:..."), then user_id = 1, name = "abcd", hashed_password = "scrypt:...".
 
     from werkzeug.security import check_password_hash
     if not check_password_hash(hashed_password, password):
@@ -127,29 +162,6 @@ def api_login():
 
     return jsonify({"message": "Login successful"}), 200
     
-@app.route("/")
-def login():
-    return render_template("login.html")
-
-
-
-
-@app.route("/login")
-def login_page():
-    return render_template("login.html")
-
-
-
-
-
-@app.route("/signup")
-def signup():
-    return render_template("signup.html")
-
-
-
-
-
 @app.route("/dashboard")
 def dashboard():
     if "user_id" not in session:
@@ -199,10 +211,6 @@ def dashboard():
     )
 
 
-
-
-
-
 @app.route("/profile")
 def profile():
     if "user_id" not in session:
@@ -215,9 +223,6 @@ def profile():
     conn.close()
 
     return render_template("profile.html", name=user[0], email=user[1], phone=user[2])
-
-
-
 
 
 
@@ -240,9 +245,6 @@ def records():
     return render_template("records.html", name=session.get("user_name"), records=record_list)
 
 
-
-
-
 from flask import send_from_directory
 
 @app.route("/uploads/<filename>")
@@ -252,15 +254,11 @@ def serve_upload(filename):
     return send_from_directory("uploads", filename)
 
 
-
-
 @app.route("/upload")
 def upload():
     if "user_id" not in session:
         return redirect(url_for("login_page"))
     return render_template("upload.html",name=session.get("user_name"))
-
-
 
 
 @app.route("/medicines")
@@ -324,8 +322,6 @@ def medicines():
 
 
 
-
-
 @app.route("/api/delete-medicine/<int:medicine_id>", methods=["POST"])
 def api_delete_medicine(medicine_id):
     if "user_id" not in session:
@@ -343,11 +339,6 @@ def api_delete_medicine(medicine_id):
     return jsonify({"message": "Deleted"}), 200
 
 
-
-
-
-
-       
 import time
 
 @app.route("/api/upload", methods=["POST"])
@@ -386,13 +377,12 @@ def api_upload():
     Keep every field concise and in plain language, suitable for a patient with no medical background.
     """
 
-    response = client.models.generate_content(
-        model="gemini-3.5-flash-lite",
-        contents=[
-            types.Part.from_bytes(data=image_bytes, mime_type=file.mimetype),
-            prompt
-        ]
-    )
+    response = ask_gemini([
+        types.Part.from_bytes(data=image_bytes, mime_type=file.mimetype),
+        prompt
+    ])
+    if response is None:
+        return jsonify({"message": "AI is busy right now. Please try again in a minute."}), 503
 
     raw_text = response.text.strip()
     if raw_text.startswith("```"):
@@ -415,8 +405,6 @@ def api_upload():
     conn.close()
 
     return jsonify(result), 200
-
-
 
 
 
@@ -472,10 +460,9 @@ def api_chat():
     {conversation_text}
     """
 
-    response = client.models.generate_content(
-        model="gemini-3.5-flash-lite",
-        contents=prompt
-    )
+    response = ask_gemini(prompt)
+    if response is None:
+        return jsonify({"reply": "AI is busy right now. Please try again in a minute."}), 200
 
     return jsonify({"reply": response.text}), 200
 
@@ -485,22 +472,10 @@ def chat():
     return render_template('chat.html', name=session.get('name'))  # match however you pass user data elsewhere
 
 
-
-
-@app.route("/blood")
-def blood():
-    if "user_id" not in session:
-        return redirect(url_for("login_page"))
-    return render_template("blood.html",name=session.get("user_name"))
-
-
-
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("login_page"))
-
-
 
 
 #Dose taken 
